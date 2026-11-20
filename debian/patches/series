@@ -36,3 +36,7 @@ ccache.diff
 # loong64: webrtc includes x86-style asm/unistd_64.h which loong64
 # (asm-generic layout) does not provide; exclude it like ARM
 loong64-webrtc-unistd-header.patch
+
+# sandbox: guard bare __NR_mseal case (kernel 6.10+ syscall) — older
+# UOS kernel uapi headers do not define it, same fix as sw64 patch
+sandbox-mseal-syscall-guard.patch
