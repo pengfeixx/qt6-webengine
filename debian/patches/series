@@ -32,3 +32,7 @@ ccache.diff
 # NOTE: support-loong64.patch / support-sw64.patch are applied per-arch from
 # debian/rules (patch_loong64 / patch_sw64 targets), following the master
 # branch pattern. Do not re-add them here — quilt applies series to ALL arches.
+
+# loong64: webrtc includes x86-style asm/unistd_64.h which loong64
+# (asm-generic layout) does not provide; exclude it like ARM
+loong64-webrtc-unistd-header.patch
