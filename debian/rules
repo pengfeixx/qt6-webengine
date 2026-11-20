@@ -52,11 +52,11 @@ touch_files = src/3rdparty/chromium/third_party/devtools-frontend/src/front_end/
 
 # Per-arch patches (same pattern as master): each architecture loads only
 # its own patch set. support-loong64.patch and support-sw64.patch are NOT
-# in debian/patches/series. NOTE: support-sw64.patch is layered on top of
-# support-loong64.patch (shared V8/GN base), so sw64 loads base + sw64.
-# A stamp file tracks the applied set because layered patches touch the
-# same files, so per-patch `patch -R` probing cannot detect applied state;
-# revert on clean follows the stamp in reverse order.
+# in debian/patches/series — quilt applies series to ALL arches, which would
+# break other platforms. loong64 loads ONLY support-loong64.patch, sw64
+# loads ONLY support-sw64.patch; neither loads the other's patch.
+# A stamp file tracks the applied set for -nc rebuild idempotency; revert
+# on clean follows the stamp.
 ifeq (loong64, $(DEB_HOST_ARCH))
 	TARGET_PATCH = patch_loong64
 else ifeq (sw64, $(DEB_HOST_ARCH))
@@ -81,15 +81,9 @@ patch_sw64:
 	@if [ "$$(cat $(STAMP) 2>/dev/null || echo none)" = "sw64" ]; then \
 		echo "arch patches: sw64 already applied"; \
 	elif [ "$$(cat $(STAMP) 2>/dev/null || echo none)" = "loong64" ]; then \
-		echo "arch patches: applying support-sw64.patch (on loong64 base)"; \
-		patch -p1 < debian/patches/support-sw64.patch && \
-		echo "arch patches: sw64 done" && echo sw64 > $(STAMP); \
-	elif [ "$$(cat $(STAMP) 2>/dev/null || echo none)" != "none" ]; then \
-		echo "ERROR: unknown patch stamp, run debian/rules clean first" >&2; exit 1; \
+		echo "ERROR: tree patched for loong64, run debian/rules clean first" >&2; exit 1; \
 	else \
-		echo "arch patches: applying support-loong64.patch (base for sw64)"; \
-		patch -p1 < debian/patches/support-loong64.patch && \
-		echo "arch patches: base applied, applying support-sw64.patch" && \
+		echo "arch patches: applying support-sw64.patch"; \
 		patch -p1 < debian/patches/support-sw64.patch && \
 		echo "arch patches: sw64 done" && echo sw64 > $(STAMP); \
 	fi
@@ -100,7 +94,7 @@ override_dh_auto_clean:
 		s=$$(cat $(STAMP)); \
 		echo "reverting arch patches for $$s"; \
 		if [ "$$s" = "sw64" ]; then patch -R -p1 < debian/patches/support-sw64.patch; fi; \
-		if [ "$$s" = "loong64" ] || [ "$$s" = "sw64" ]; then patch -R -p1 < debian/patches/support-loong64.patch; fi; \
+		if [ "$$s" = "loong64" ]; then patch -R -p1 < debian/patches/support-loong64.patch; fi; \
 		rm -f $(STAMP); \
 	fi
 	# NOTE: do not blanket-delete *.orig/*.rej — the chromium rust vendor
